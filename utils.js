@@ -21,6 +21,28 @@ let markedCodes = {
   NZR: "Назрань",
   ORL: "Орел",
   RND: "Ростов_на_Дону",
+  CHB: "Чебоксары",
+  YAM: "Ноябрьск_Салехард",
+  TUM: "Тюмень",
+  CHL: "Челябинск",
+  EKT: "Екатеринбург",
+  HMS: "Сургут",
+  IGK: "Ижевск",
+  IKO: "Йошкар_Ола",
+  KIR: "Киров",
+  KRG: "Курган",
+  KZN: "Казань",
+  NNG: "Нижний_Новгород",
+  ULN: "Ульяновск",
+  UFA: "Уфа",
+  ORB: "Оренбург",
+  PNZ: "Пенза",
+  TOL: "Тольятти",
+  PRM: "Пермь",
+  SAM: "Самара",
+  SRT: "Саратов",
+  SRN: "Саранск",
+  STK: "Сыктывкар",
 };
 let reverseMarkedCodes = {
   Волгоград: "VLG",
@@ -43,6 +65,28 @@ let reverseMarkedCodes = {
   Назрань: "NZR",
   Орел: "ORL",
   Ростов_на_Дону: "RND",
+  Чебоксары: "CHB",
+  Ноябрьск_Салехард: "YAM",
+  Тюмень: "TUM",
+  Челябинск: "CHL",
+  Екатеринбург: "EKT",
+  Сургут: "HMS",
+  Ижевск: "IGK",
+  Йошкар_Ола: "IKO",
+  Киров: "KIR",
+  Курган: "KRG",
+  Казань: "KZN",
+  Нижний_Новгород: "NNG",
+  Ульяновск: "ULN",
+  Уфа: "UFA",
+  Оренбург: "ORB",
+  Пенза: "PNZ",
+  Тольятти: "TOL",
+  Пермь: "PRM",
+  Самара: "SAM",
+  Саратов: "SRT",
+  Саранск: "SRN",
+  Сыктывкар: "STK",
 };
 
 function readJsons() {
@@ -120,6 +164,7 @@ function filterJsons(jsonObjects) {
 function getTariffs(socObjects, jsonObjects) {
   let unfounded = [];
   let tariffs = [];
+
   try {
     socObjects.forEach((socObject) => {
       let founded = jsonObjects.find((jsonObject) => {
@@ -143,7 +188,11 @@ function getTariffs(socObjects, jsonObjects) {
         unfounded.push(socObject);
       }
     });
-    console.log(Array.from(unfounded));
+    fs.writeFileSync(
+      "./Ненайденные_тарифы_Которые_есть_в_excel.json",
+      JSON.stringify(Array.from(unfounded))
+    );
+
     return tariffs;
   } catch (err) {
     console.log(err);
@@ -233,7 +282,7 @@ function addMatchedArrayAndDeleteTextFromTariffs(tariffs) {
     return tariff;
   });
 }
-function changePriceInSms(tariffs, socObjects) {
+function getOldAndNewSMS(tariffs, socObjects) {
   return tariffs.map((tariff) => {
     let OldPriceWithText = tariff.matched[0];
     let oldPrice = tariff.matched[1];
@@ -277,6 +326,45 @@ function changePriceInSms(tariffs, socObjects) {
     };
   });
 }
+function changeSMSAndDeleteMatchedField(tariffs, socObjects) {
+  tariffs.forEach((tariff) => {
+    let OldPriceWithText = tariff.matched[0];
+    let oldPrice = tariff.matched[1];
+
+    let currentTariffPriceInterval = tariff.matched.pop();
+
+    let intervals = {
+      сут: 30,
+      мес: 1,
+      неделю: 1,
+    };
+    let currentSocObject = socObjects.find(
+      (soc) => soc.SOC == tariff.soc && tariff.marketCode == soc.markedCode
+    );
+
+    let newPriceWithSomeText = currentSocObject.newPriceWithText;
+
+    let newPrice = newPriceWithSomeText.match(/(\d+)/)[0];
+    let newPriceNormalized = (
+      newPrice / (intervals[currentTariffPriceInterval] || 30)
+    ).toFixed(2);
+    let newPriceWithOldText =
+      OldPriceWithText.split(oldPrice)[0].trim() +
+      " " +
+      parseFloat(newPriceNormalized) +
+      " " +
+      OldPriceWithText.split(oldPrice)[1].trim();
+
+    let newSms =
+      tariff.sms.split(OldPriceWithText.trim())[0].trim() +
+      " " +
+      newPriceWithOldText.trim() +
+      " " +
+      tariff.sms.split(OldPriceWithText.trim())[1].trim();
+    tariff.sms = newSms;
+    tariff.matched = undefined;
+  });
+}
 module.exports = {
   readJsons,
   readSocs,
@@ -289,7 +377,7 @@ module.exports = {
   updateTariffLink,
   saveJsonFiles,
   addAbonPriceTextToTariffs,
-
+  getOldAndNewSMS,
   addMatchedArrayAndDeleteTextFromTariffs,
-  changePriceInSms,
+  changeSMSAndDeleteMatchedField,
 };
