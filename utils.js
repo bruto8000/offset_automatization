@@ -287,7 +287,7 @@ function getOldAndNewSMS(tariffs, socObjects) {
     let OldPriceWithText = tariff.matched[0];
     let oldPrice = tariff.matched[1];
 
-    let currentTariffPriceInterval = tariff.matched.pop();
+    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 1];
 
     let intervals = {
       сут: 30,
@@ -311,7 +311,7 @@ function getOldAndNewSMS(tariffs, socObjects) {
       " " +
       OldPriceWithText.split(oldPrice)[1].trim();
 
-    tariff.newSms =
+    let newSms =
       tariff.sms.split(OldPriceWithText.trim())[0].trim() +
       " " +
       newPriceWithOldText.trim() +
@@ -320,7 +320,7 @@ function getOldAndNewSMS(tariffs, socObjects) {
 
     return {
       "Старая смска": tariff.sms,
-      "Новая смска": tariff.newSms,
+      "Новая смска": newSms,
       "Старая цена": parseFloat(oldPrice) || oldPrice.trim(),
       "Новая цена": parseFloat(newPriceNormalized),
     };
@@ -331,7 +331,7 @@ function changeSMSAndDeleteMatchedField(tariffs, socObjects) {
     let OldPriceWithText = tariff.matched[0];
     let oldPrice = tariff.matched[1];
 
-    let currentTariffPriceInterval = tariff.matched.pop();
+    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 1];
 
     let intervals = {
       сут: 30,
