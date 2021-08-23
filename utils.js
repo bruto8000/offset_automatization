@@ -124,6 +124,9 @@ function readSocs() {
 }
 function getOnlySocs(socObjects) {
   let normalized = socObjects.map((socObject) => {
+    if (!markedCodes[socObject["Маркет-коды"]]) {
+      console.log(`Не найден СОК в маркет кодах ${socObject["Маркет-коды"]}`);
+    }
     return {
       SOC: socObject.SOC,
       filial: markedCodes[socObject["Маркет-коды"]],
@@ -132,34 +135,6 @@ function getOnlySocs(socObjects) {
     };
   });
   return normalized;
-}
-function filterJsons(jsonObjects) {
-  let markedCodes = [
-    "Волгоград",
-    "Воронеж",
-    "Владикавказ",
-    "Тамбов",
-    "Ставрополь",
-    "Сочи",
-    "Астрахань",
-    "Белгород",
-    "Брянск",
-    "Элиста",
-    "Грозный",
-    "Черкесск",
-    "Краснодар",
-    "Курск",
-    "Липецк",
-    "Махачкала",
-    "Нальчик",
-    "Назрань",
-    "Орел",
-    "Ростов_на_Дону",
-  ];
-  let filtred = jsonObjects.filter(
-    (jsonObject) => !!markedCodes.includes(jsonObject.JSONINFO.Filial)
-  );
-  return filtred;
 }
 function getTariffs(socObjects, jsonObjects) {
   let unfounded = [];
@@ -241,7 +216,7 @@ function addAbonPriceTextToTariffs(tariffs) {
   let unchanged = [];
   let changed = [];
   let reg =
-    /(АП\s?-|АП|Аб\. пл\.|Абон\.плата|Абон\. плата|Абонентская плата -|абон\. плата –|АП-|АП–|Абон\.плата -|Аб\. пл\. -|Абон\. плата -|Аб\. пл\. -|Абон.\s?плата-|Аб\. плата:|Абонентская плата\s?[-:]?|Аб\. плата -|Аб.плата|Абон.плата: первые 30 дней -|Абон.плата -)(\s+)?\d+[\,\.\s]?(\d+)?\s?(р|руб)\.?\/(сут|мес|неделю)|плата в сутки\s?\d+\s?руб/i;
+    /(АП\s?-|АП|Аб\. пл\.|Абон\.плата|Абон\. плата|Абонентская плата -|абон\. плата –|АП-|АП–|Абон\.плата -|Аб\. пл\. -|Абон\. плата -|Аб\. пл\. -|Абон.\s?плата-|Аб\. плата:|Абонентская плата\s?[-:]?|Аб\. плата -|Аб.плата|Абон.плата: первые 30 дней -|Абон.плата -)(\s+)?\d+[\,\.\s]?(\d+)?\s?(р|руб)\.?\/(сут(ки)?|мес|неделю)|плата в сутки\s?\d+\s?руб/i;
   tariffs.forEach((tariff) => {
     if (!tariff.sms) {
       return;
@@ -265,7 +240,7 @@ function addAbonPriceTextToTariffs(tariffs) {
   };
 }
 function addMatchedArrayAndDeleteTextFromTariffs(tariffs) {
-  let reg = /((\d+)[\,\.\s]?(\d+)?)\s?(р|руб)\.?\/(сут|мес|неделю)/;
+  let reg = /((\d+)[\,\.\s]?(\d+)?)\s?(р|руб)\.?\/(сут(ки)?|мес|неделю)/;
   let secondReg = /[Пп]лата в сутки\s*(\d+)\s*руб/;
   return tariffs.map((tariff) => {
     let matched = tariff.AbonPriceText.match(reg);
@@ -287,10 +262,10 @@ function getOldAndNewSMS(tariffs, socObjects) {
     let OldPriceWithText = tariff.matched[0];
     let oldPrice = tariff.matched[1];
 
-    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 1];
-
+    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 2];
     let intervals = {
       сут: 30,
+      сутки: 30,
       мес: 1,
       неделю: 1,
     };
@@ -323,6 +298,9 @@ function getOldAndNewSMS(tariffs, socObjects) {
       "Новая смска": newSms,
       "Старая цена": parseFloat(oldPrice) || oldPrice.trim(),
       "Новая цена": parseFloat(newPriceNormalized),
+      СОК: tariff.soc,
+      Филиал: markedCodes[tariff.marketCode],
+      "Новая ссылка": tariff.ссылка,
     };
   });
 }
@@ -331,10 +309,11 @@ function changeSMSAndDeleteMatchedField(tariffs, socObjects) {
     let OldPriceWithText = tariff.matched[0];
     let oldPrice = tariff.matched[1];
 
-    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 1];
+    let currentTariffPriceInterval = tariff.matched[tariff.matched.length - 2];
 
     let intervals = {
       сут: 30,
+      сутки: 30,
       мес: 1,
       неделю: 1,
     };
@@ -369,7 +348,6 @@ module.exports = {
   readJsons,
   readSocs,
   getOnlySocs,
-  filterJsons,
   getTariffs,
   getLinks,
   addMarkedCodesToTariffs,
