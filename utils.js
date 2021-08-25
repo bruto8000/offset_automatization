@@ -43,6 +43,46 @@ let markedCodes = {
   SRT: "Саратов",
   SRN: "Саранск",
   STK: "Сыктывкар",
+  SML: "Смоленск",
+  RZN: "Рязань",
+  MUR: "Мурманск",
+  KSM: "Кострома",
+  KRL: "Петрозаводск",
+  KLG: "Калуга",
+  IVN: "Иваново",
+  EXT: "Калининград",
+  ARH: "Архангельск",
+  SPB: "Санкт_Петербург",
+  TUL: "Тула",
+  TVR: "Тверь",
+  VLD: "Владимир",
+  VNG: "Новгород_Великий",
+  VOL: "Вологда",
+  YRL: "Ярославль",
+  PSK: "Псков",
+  ABK: "Абакан",
+  BAR: "Барнаул",
+  BGK: "Благовещенск",
+  BIR: "Биробиджан",
+  BUR: "Улан_Удэ",
+  CHT: "Чита",
+  DTI: "Хабаровск",
+  GAL: "Горно_Алтайск",
+  IRK: "Иркутск",
+  KMR: "Кемерово",
+  KRS: "Красноярск",
+  KSK: "Комсомольск_на_Амуре",
+  KZL: "Кызыл",
+  MGD: "Магадан",
+  NOR: "Норильск",
+  NSK: "Новосибирск",
+  OMS: "Омск",
+  PPK: "Петропавловск_Камчатский",
+  SKH: "Южно_Сахалинск",
+  TMS: "Томск",
+  VLA: "Владивосток",
+  YAK: "Якутск",
+  ANR: "Анадырь",
 };
 let reverseMarkedCodes = {
   Волгоград: "VLG",
@@ -87,6 +127,46 @@ let reverseMarkedCodes = {
   Саратов: "SRT",
   Саранск: "SRN",
   Сыктывкар: "STK",
+  Смоленск: "SML",
+  Рязань: "RZN",
+  Мурманск: "MUR",
+  Кострома: "KSM",
+  Петрозаводск: "KRL",
+  Калуга: "KLG",
+  Иваново: "IVN",
+  Калининград: "EXT",
+  Архангельск: "ARH",
+  Санкт_Петербург: "SPB",
+  Тула: "TUL",
+  Тверь: "TVR",
+  Владимир: "VLD",
+  Новгород_Великий: "VNG",
+  Вологда: "VOL",
+  Ярославль: "YRL",
+  Псков: "PSK",
+  Абакан: "ABK",
+  Барнаул: "BAR",
+  Благовещенск: "BGK",
+  Биробиджан: "BIR",
+  Улан_Удэ: "BUR",
+  Чита: "CHT",
+  Хабаровск: "DTI",
+  Горно_Алтайск: "GAL",
+  Иркутск: "IRK",
+  Кемерово: "KMR",
+  Красноярск: "KRS",
+  Комсомольск_на_Амуре: "KSK",
+  Кызыл: "KZL",
+  Магадан: "MGD",
+  Норильск: "NOR",
+  Новосибирск: "NSK",
+  Омск: "OMS",
+  Петропавловск_Камчатский: "PPK",
+  Южно_Сахалинск: "SKH",
+  Томск: "TMS",
+  Владивосток: "VLA",
+  Якутск: "YAK",
+  Анадырь: "ANR",
 };
 
 function readJsons() {
@@ -175,18 +255,21 @@ function getTariffs(socObjects, jsonObjects) {
 }
 function addMarkedCodesToTariffs(tariffs, jsonObjects) {
   tariffs.forEach((tariff) => {
-    tariff.marketCode =
-      reverseMarkedCodes[
-        jsonObjects.find((jsonObject) =>
-          (
-            jsonObject.JSONINFO.open ||
-            jsonObject.JSONINFO.nonpublick ||
-            jsonObject.JSONINFO.close
-          ).includes(tariff)
-        ).JSONINFO.Filial
-      ];
+    let foundedJsonObject = jsonObjects.find((jsonObject) =>
+      (
+        jsonObject.JSONINFO.open ||
+        jsonObject.JSONINFO.nonpublick ||
+        jsonObject.JSONINFO.close
+      ).includes(tariff)
+    );
+
+    tariff.marketCode = reverseMarkedCodes[foundedJsonObject.JSONINFO.Filial];
     if (!tariff.marketCode) {
-      console.log("ALERT NO MARKET CODE", tariff);
+      console.log(
+        "ALERT NO MARKET CODE",
+        tariff,
+        foundedJsonObject.JSONINFO.Filial
+      );
     }
   });
 }
@@ -216,7 +299,7 @@ function addAbonPriceTextToTariffs(tariffs) {
   let unchanged = [];
   let changed = [];
   let reg =
-    /(АП\s?-|АП|Аб\. пл\.|Абон\.плата|Абон\. плата|Абонентская плата -|абон\. плата –|АП-|АП–|Абон\.плата -|Аб\. пл\. -|Абон\. плата -|Аб\. пл\. -|Абон.\s?плата-|Аб\. плата:|Абонентская плата\s?[-:]?|Аб\. плата -|Аб.плата|Абон.плата: первые 30 дней -|Абон.плата -)(\s+)?\d+[\,\.\s]?(\d+)?\s?(р|руб)\.?\/(сут(ки)?|мес|неделю)|плата в сутки\s?\d+\s?руб/i;
+    /(АП\s?-|АП|Аб\. пл\.|Абон\.плата|Абон\. плата|абон\.плату|Абонентская плата -|абон\. плата –|АП-|АП–|Абон\.плата -|Аб\. пл\. -|Абон\. плата -|Аб\. пл\. -|Абон.\s?плата-|Аб\. плата:|Абонентская плата\s?[-:]?|Аб\. плата -|Аб.плата\:?|Абон.плата: первые 30 дней -|Абон.плата -)(\s+)?\d+[\,\.\s]?(\d+)?\s?(р|руб)\.?\/?\s?в?\s?(сут(ки)?|мес(яц)?|неделю)|плата в сутки\s?\d+\s?руб/i;
   tariffs.forEach((tariff) => {
     if (!tariff.sms) {
       return;
@@ -226,11 +309,15 @@ function addAbonPriceTextToTariffs(tariffs) {
       sms: tariff.sms,
       price: price && price[0],
     };
-    if (!price) {
+    if (!toPush.price) {
       unchanged.push(tariff);
     } else {
       tariff.AbonPriceText = toPush.price;
-      changed.push(tariff);
+      if (changed.includes(tariff)) {
+        console.log("Второй раз один и тот-же тариф ", tariff.soc);
+      } else {
+        changed.push(tariff);
+      }
     }
   });
 
@@ -240,7 +327,8 @@ function addAbonPriceTextToTariffs(tariffs) {
   };
 }
 function addMatchedArrayAndDeleteTextFromTariffs(tariffs) {
-  let reg = /((\d+)[\,\.\s]?(\d+)?)\s?(р|руб)\.?\/(сут(ки)?|мес|неделю)/;
+  let reg =
+    /((\d+)[\,\.\s]?(\d+)?)\s?(р|руб)\.?\/?\s?в?\s?(сут(ки)?|мес|неделю)/;
   let secondReg = /[Пп]лата в сутки\s*(\d+)\s*руб/;
   return tariffs.map((tariff) => {
     let matched = tariff.AbonPriceText.match(reg);
@@ -249,7 +337,7 @@ function addMatchedArrayAndDeleteTextFromTariffs(tariffs) {
       if (matched) {
         matched.push("ERR:TYPE");
       } else {
-        console.log("err, when matching price from Abon Price".tariff.soc);
+        console.log("err, when matching price from Abon Price", tariff.soc);
       }
     }
     tariff.matched = matched;
@@ -278,7 +366,10 @@ function getOldAndNewSMS(tariffs, socObjects) {
     let newPrice = newPriceWithSomeText.match(/(\d+)/)[0];
     let newPriceNormalized = (
       newPrice / (intervals[currentTariffPriceInterval] || 30)
-    ).toFixed(2);
+    )
+      .toFixed(3)
+      .slice(0, -1);
+
     let newPriceWithOldText =
       OldPriceWithText.split(oldPrice)[0].trim() +
       " " +
@@ -326,7 +417,9 @@ function changeSMSAndDeleteMatchedField(tariffs, socObjects) {
     let newPrice = newPriceWithSomeText.match(/(\d+)/)[0];
     let newPriceNormalized = (
       newPrice / (intervals[currentTariffPriceInterval] || 30)
-    ).toFixed(2);
+    )
+      .toFixed(3)
+      .slice(0, -1);
     let newPriceWithOldText =
       OldPriceWithText.split(oldPrice)[0].trim() +
       " " +
